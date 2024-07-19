@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+</head>
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+     font-family: 'Fredoka One', cursive;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+ background-image: url('Main.jpg.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.quiz-container {
+   background-color: rgba(255, 255, 255, 0.9); /* White with 90% opacity */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 90%;
+    max-width: 600px;
+}
+h1, h2, p, button, .choice {
+    text-shadow: 2px 2px 0 #000000, 
+                 2px -2px 0 #000000, 
+                 -2px 2px 0 #000000, 
+                 -2px -2px 0 #000000, 
+                 2px 0px 0 #000000, 
+                 0px 2px 0 #000000, 
+                 -2px 0px 0 #000000, 
+                 0px -2px 0 #000000;
+    color: #ffffff;
+}
+h1, h2 {
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+}
+
+p, button, .choice {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+button, .choice {
+    background-color: #191970; 
+    border: 3px solid #ffffff;
+    border-radius: 25px;
+    box-shadow: 0 4px 0 #000000;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: all 0.3s;
+}
+
+
+.hidden {
+    display: none;
+}
+
+
+button:hover, .choice:hover {
+    background-color: #00008B; 
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000000;
+}
+
+.choice.selected {
+    background-color: #191970; 
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+#feedback {
+    font-size: 1.5rem;
+    font-weight: normal; /* Fredoka One is already bold */
+}
+
+#feedback.correct {
+    color: #32CD32; /* Lime green for correct answers */
+}
+
+#feedback.incorrect {
+    color: #FF4500; /* Orange-red for incorrect answers */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+h1, h2 {
+    animation: float 3s ease-in-out infinite;
+}
+
+.choice {
+    transition: all 0.3s;
+}
+
+.choice:active {
+    transform: scale(0.95);
+}
+}
+</style>
+<body>
+    <div class="quiz-container">
+        <div id="welcome-screen">
+            <h1>Welcome to the Quiz!</h1>
+            <p>Test your knowledge with this fun quiz. Good luck!</p>
+            <button id="start-quiz">Start Quiz</button>
+        </div>
+        <div id="quiz-screen" class="hidden">
+            <h2 id="question"></h2>
+            <div id="choices"></div>
+            <button id="submit-answer" class="hidden">Submit Answer</button>
+            <p id="feedback" class="hidden"></p>
+        </div>
+        <div id="results-screen" class="hidden">
+            <h2>Quiz Results</h2>
+            <p>Your score: <span id="score"></span></p>
+            <button id="retry-quiz">Retry Quiz</button>
+        </div>
+    </div>
+    <script>
+const quizData = [
+    {
+        question: "Which planet in our solar system is known for its prominent ring system?",
+        choices: ["Jupiter", "Earth", "Mars", "Saturn"],
+        correctAnswer: 3
+    },
+    {
+        question: "Which planet is known as the Red Planet?",
+        choices: ["Mars", "Venus", "Jupiter", "Saturn"],
+        correctAnswer: 0
+    },
+    {
+        question: "What is the closest star to Earth, besides the Sun?",
+        choices: ["Betelgeuse", "Sirius", "Proxima Centauri", "Alpha Centauri A"],
+        correctAnswer: 2
+    },
+{
+        question: "What is the name of the galaxy that contains our solar system?",
+        choices: ["Andromeda", "Milky Way", "Whirlpool", "Sombrero"],
+        correctAnswer: 1
+    },
+{
+        question: "What is the name of the force that keeps planets in orbit around the Sun?",
+        choices: ["Gravity", "Weak Nuclear Force", "Strong Nuclear Force", "Magnetic Force"],
+        correctAnswer: 0
+    }
+];
+
+const welcomeScreen = document.getElementById('welcome-screen');
+const quizScreen = document.getElementById('quiz-screen');
+const resultsScreen = document.getElementById('results-screen');
+const startQuizButton = document.getElementById('start-quiz');
+const questionElement = document.getElementById('question');
+const choicesElement = document.getElementById('choices');
+const submitAnswerButton = document.getElementById('submit-answer');
+const feedbackElement = document.getElementById('feedback');
+const scoreElement = document.getElementById('score');
+const retryQuizButton = document.getElementById('retry-quiz');
+
+let currentQuestionIndex = 0;
+let score = 0;
+let selectedChoice = null;
+
+function startQuiz() {
+    welcomeScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+    loadQuestion();
+}
+
+function loadQuestion() {
+    const question = quizData[currentQuestionIndex];
+    questionElement.textContent = question.question;
+    choicesElement.innerHTML = '';
+    submitAnswerButton.classList.add('hidden');
+    feedbackElement.classList.add('hidden');
+
+    question.choices.forEach((choice, index) => {
+        const choiceButton = document.createElement('button');
+        choiceButton.classList.add('choice');
+        choiceButton.textContent = choice;
+        choiceButton.addEventListener('click', () => selectChoice(index));
+        choicesElement.appendChild(choiceButton);
+    });
+
+    quizScreen.classList.add('fade-in');
+}
+
+function selectChoice(index) {
+    const choices = choicesElement.getElementsByClassName('choice');
+    for (let choice of choices) {
+        choice.classList.remove('selected');
+    }
+    choices[index].classList.add('selected');
+    selectedChoice = index;
+    submitAnswerButton.classList.remove('hidden');
+}
+
+function submitAnswer() {
+    if (selectedChoice === null) return;
+
+    const question = quizData[currentQuestionIndex];
+    const isCorrect = selectedChoice === question.correctAnswer;
+
+    if (isCorrect) {
+        score++;
+        feedbackElement.textContent = "Correct!";
+        feedbackElement.className = "correct";
+    } else {
+        feedbackElement.textContent = `Incorrect. The correct answer is: ${question.choices[question.correctAnswer]}`;
+        feedbackElement.className = "incorrect";
+    }
+
+    feedbackElement.classList.remove('hidden');
+    submitAnswerButton.classList.add('hidden');
+
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }, 2000);
+}
+
+function showResults() {
+    quizScreen.classList.add('hidden');
+    resultsScreen.classList.remove('hidden');
+    scoreElement.textContent = `${score} out of ${quizData.length}`;
+}
+
+function retryQuiz() {
+    currentQuestionIndex = 0;
+    score = 0;
+    selectedChoice = null;
+    resultsScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+    loadQuestion();
+}
+
+startQuizButton.addEventListener('click', startQuiz);
+submitAnswerButton.addEventListener('click', submitAnswer);
+retryQuizButton.addEventListener('click', retryQuiz);</script>
+</body>
+</html>
